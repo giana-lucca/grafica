@@ -1,0 +1,42 @@
+<%- include('../layout', { title: 'Pedido ' + pedido.numero, body: `
+<nav class="br-breadcrumb">
+  <ol>
+    <li><a href="/pedidos">Meus Pedidos</a></li>
+    <li>${pedido.numero}</li>
+  </ol>
+</nav>
+
+<h2>Pedido ${pedido.numero} — ${pedido.titulo}</h2>
+<p><span class="br-tag">${pedido.status.replace('_',' ')}</span>
+${pedido.prazo_entrega ? ' · Prazo: ' + new Date(pedido.prazo_entrega).toLocaleDateString('pt-BR') : ''}</p>
+
+<h3>Itens</h3>
+<table class="br-table">
+  <thead><tr><th>Serviço</th><th>Qtd</th><th>Valor</th><th>Arte</th></tr></thead>
+  <tbody>
+    ${pedido.itens.map(i => `
+    <tr>
+      <td>${i.tipo}</td><td>${i.quantidade}</td>
+      <td>R$ ${Number(i.valor).toFixed(2)}</td>
+      <td>${i.nome_original || '<span class="br-tag danger">Sem arquivo</span>'}</td>
+    </tr>`).join('')}
+  </tbody>
+</table>
+
+<h3>Histórico</h3>
+<ol class="br-step vertical">
+  ${pedido.historico.map(h => `
+  <li class="step-item">
+    <div class="step-title">${h.status_novo.replace('_',' ')}</div>
+    <div class="step-subtitle">${h.nome_usuario} — ${new Date(h.created_at).toLocaleString('pt-BR')}</div>
+    ${h.comentario ? '<div class="step-content">' + h.comentario + '</div>' : ''}
+  </li>`).join('')}
+</ol>
+
+${pedido.status === 'pendencia' ? `
+<h3>Responder pendência</h3>
+<form method="POST" action="/pedidos/${pedido.id}/responder">
+  <div class="br-textarea"><label>Sua resposta</label><textarea name="comentario" required></textarea></div>
+  <button class="br-button primary" type="submit">Enviar resposta</button>
+</form>` : ''}
+` }) %>

@@ -1,0 +1,174 @@
+<%- include('../layout', { title: 'Novo Pedido', body: `
+<h2>Novo Pedido</h2>
+${erro ? '<div class="br-message danger"><div class="content">' + erro + '</div></div>' : ''}
+
+<!-- Wizard GOV.BR DS -->
+<div class="br-wizard" data-scroll="false">
+  <div class="wizard-progress">
+    <button class="wizard-progress-btn active" step="1" type="button">Itens</button>
+    <button class="wizard-progress-btn" step="2" type="button">Acabamento</button>
+    <button class="wizard-progress-btn" step="3" type="button">Confirmar</button>
+  </div>
+
+  <!-- Etapa 1: Itens -->
+  <div class="wizard-panel active" id="etapa-1">
+    <div class="wizard-panel-content">
+      <div class="br-select">
+        <label>Serviço</label>
+        <select id="sel-servico"><option value="">Carregando...</option></select>
+      </div>
+      <div class="br-input"><label>Quantidade</label>
+        <input id="inp-qtd" type="number" min="1" value="1">
+      </div>
+      <!-- Campos de banner (largura/altura) mostrados condicionalmente -->
+      <div id="campos-banner" style="display:none">
+        <div class="br-input"><label>Largura (m)</label><input id="inp-larg" type="number" step="0.01"></div>
+        <div class="br-input"><label>Altura (m)</label><input id="inp-alt" type="number" step="0.01"></div>
+      </div>
+      <button class="br-button secondary" type="button" onclick="adicionarItem()">Adicionar item</button>
+
+      <table class="br-table mt-3" id="tabela-itens">
+        <thead><tr><th>Serviço</th><th>Qtd</th><th>Valor</th><th>Arte</th><th></th></tr></thead>
+        <tbody id="tbody-itens"></tbody>
+      </table>
+      <p><strong>Total: R$ <span id="total">0,00</span></strong></p>
+    </div>
+    <div class="wizard-panel-btn">
+      <button class="br-button primary" type="button" onclick="irEtapa(2)">Próximo</button>
+    </div>
+  </div>
+
+  <!-- Etapa 2: Acabamento -->
+  <div class="wizard-panel" id="etapa-2">
+    <div class="wizard-panel-content">
+      <div class="br-select"><label>Plastificação</label>
+        <select id="sel-plast">
+          <option value="">Sem plastificação</option>
+          <option value="brilho">Brilho</option>
+          <option value="fosco">Fosco</option>
+        </select>
+      </div>
+      <div class="br-checkbox"><input id="cb-grampo" type="checkbox"><label for="cb-grampo">Grampo</label></div>
+      <div class="br-checkbox"><input id="cb-vinco" type="checkbox"><label for="cb-vinco">Vinco</label></div>
+      <div class="br-checkbox"><input id="cb-cola" type="checkbox"><label for="cb-cola">Cola</label></div>
+    </div>
+    <div class="wizard-panel-btn">
+      <button class="br-button secondary" type="button" onclick="irEtapa(1)">Anterior</button>
+      <button class="br-button primary" type="button" onclick="irEtapa(3)">Próximo</button>
+    </div>
+  </div>
+
+  <!-- Etapa 3: Confirmar -->
+  <div class="wizard-panel" id="etapa-3">
+    <div class="wizard-panel-content">
+      <div class="br-input"><label>Título do pedido</label><input id="inp-titulo" required></div>
+      <div class="br-textarea"><label>Observações (opcional)</label><textarea id="inp-obs"></textarea></div>
+      <div class="br-input">
+        <label>Número da transferência bancária</label>
+        <input id="inp-transf" required>
+        <span class="br-message feedback">Obrigatório para confirmar o pedido.</span>
+      </div>
+      <p>Você pode salvar como rascunho e confirmar depois.</p>
+    </div>
+    <div class="wizard-panel-btn">
+      <button class="br-button secondary" type="button" onclick="irEtapa(2)">Anterior</button>
+      <button class="br-button secondary" type="button" onclick="salvar('rascunho')">Salvar rascunho</button>
+      <button class="br-button primary" type="button" onclick="confirmar()">Confirmar pedido</button>
+    </div>
+  </div>
+</div>
+
+<form id="form-pedido" method="POST" action="/pedidos" style="display:none">
+  <input type="hidden" name="titulo" id="hid-titulo">
+  <input type="hidden" name="observacao_cliente" id="hid-obs">
+  <input type="hidden" name="itens" id="hid-itens">
+  <input type="hidden" name="acabamento" id="hid-acabamento">
+  <input type="hidden" name="numero_transferencia" id="hid-transf">
+</form>
+`, scripts: `
+<script>
+let catalogo = [];
+let itensPedido = [];
+let total = 0;
+
+// Carrega catálogo ao iniciar
+fetch('/api/catalogo-ativo').then(r => r.json()).then(data => {
+  catalogo = data;
+  const sel = document.getElementById('sel-servico');
+  sel.innerHTML = data.map(s =>
+    '<option value="' + s.id + '" data-tipo="' + s.tipo + '">' + s.descricao + '</option>'
+  ).join('');
+  sel.addEventListener('change', () => {
+    const opt = sel.options[sel.selectedIndex];
+    document.getElementById('campos-banner').style.display =
+      opt.dataset.tipo === 'banner' ? 'block' : 'none';
+  });
+});
+
+async function adicionarItem() {
+  const sel = document.getElementById('sel-servico');
+  const id = sel.value;
+  const descricao = sel.options[sel.selectedIndex].text;
+  const tipo = sel.options[sel.selectedIndex].dataset.tipo;
+  const qtd = parseInt(document.getElementById('inp-qtd').value);
+  const opcoes = tipo === 'banner' ? {
+    largura: parseFloat(document.getElementById('inp-larg').value),
+    altura: parseFloat(document.getElementById('inp-alt').value),
+  } : {};
+
+  const resp = await fetch('/api/calcular-item', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ catalogo_servico_id: id, quantidade: qtd, opcoes }),
+  });
+  const { valor } = await resp.json();
+
+  itensPedido.push({ catalogo_servico_id: id, tipo, quantidade: qtd, valor, opcoes });
+  total += valor;
+  document.getElementById('total').textContent = total.toFixed(2).replace('.',',');
+
+  const tr = document.createElement('tr');
+  tr.innerHTML = '<td>' + descricao + '</td><td>' + qtd + '</td><td>R$ ' + valor.toFixed(2) + '</td><td><span class="br-tag warning">Aguardando</span></td><td><button type="button" onclick="removerItem(' + (itensPedido.length-1) + ', this, ' + valor + ')">&#x2715;</button></td>';
+  document.getElementById('tbody-itens').appendChild(tr);
+}
+
+function removerItem(idx, btn, valor) {
+  itensPedido.splice(idx, 1);
+  total -= valor;
+  document.getElementById('total').textContent = total.toFixed(2).replace('.',',');
+  btn.closest('tr').remove();
+}
+
+function irEtapa(n) {
+  document.querySelectorAll('.wizard-panel').forEach((p, i) => {
+    p.classList.toggle('active', i + 1 === n);
+  });
+  document.querySelectorAll('.wizard-progress-btn').forEach((b, i) => {
+    b.classList.toggle('active', i + 1 === n);
+  });
+}
+
+function submeterForm(transferencia) {
+  document.getElementById('hid-titulo').value = document.getElementById('inp-titulo').value;
+  document.getElementById('hid-obs').value = document.getElementById('inp-obs').value;
+  document.getElementById('hid-itens').value = JSON.stringify(itensPedido);
+  document.getElementById('hid-transf').value = transferencia || '';
+  const acab = {
+    plastificacao: document.getElementById('sel-plast').value || null,
+    grampo: document.getElementById('cb-grampo').checked,
+    vinco: document.getElementById('cb-vinco').checked,
+    cola: document.getElementById('cb-cola').checked,
+    valor: 0,
+  };
+  document.getElementById('hid-acabamento').value = JSON.stringify(acab);
+  document.getElementById('form-pedido').submit();
+}
+
+function salvar(modo) { submeterForm(''); }
+
+function confirmar() {
+  const transf = document.getElementById('inp-transf').value;
+  if (!transf) { alert('Informe o número da transferência.'); return; }
+  submeterForm(transf);
+}
+</script>
+` }) %>

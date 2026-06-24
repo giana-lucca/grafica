@@ -1,0 +1,23 @@
+<%- include('../layout', { title: 'Meus Pedidos', body: `
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Meus Pedidos</h2>
+  <a href="/pedidos/novo" class="br-button primary">Novo pedido</a>
+</div>
+
+${pedidos.length === 0 ? '<p>Nenhum pedido ainda.</p>' : `
+<table class="br-table">
+  <thead>
+    <tr><th>Número</th><th>Título</th><th>Status</th><th>Data</th><th></th></tr>
+  </thead>
+  <tbody>
+    ${pedidos.map(p => `
+    <tr>
+      <td>${p.numero}</td>
+      <td>${p.titulo}</td>
+      <td><span class="br-tag">${p.status.replace('_',' ')}</span></td>
+      <td>${new Date(p.created_at).toLocaleDateString('pt-BR')}</td>
+      <td><a href="/pedidos/${p.id}" class="br-button secondary small">Ver</a></td>
+    </tr>`).join('')}
+  </tbody>
+</table>`}
+` }) %>
