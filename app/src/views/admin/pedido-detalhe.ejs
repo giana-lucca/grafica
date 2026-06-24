@@ -1,0 +1,54 @@
+<%- include('../layout', { title: 'Pedido ' + pedido.numero, body: `
+<nav class="br-breadcrumb"><ol>
+  <li><a href="/admin/pedidos">Painel</a></li>
+  <li>${pedido.numero}</li>
+</ol></nav>
+
+<h2>Pedido ${pedido.numero} — ${pedido.titulo}</h2>
+<p><strong>Cliente:</strong> ${pedido.nome_usuario} (${pedido.email_usuario})</p>
+<p><strong>Status:</strong> <span class="br-tag">${pedido.status.replace(/_/g,' ')}</span></p>
+${pedido.numero_transferencia ? '<p><strong>Transferência:</strong> ' + pedido.numero_transferencia + '</p>' : ''}
+${pedido.prazo_entrega ? '<p><strong>Prazo:</strong> ' + new Date(pedido.prazo_entrega).toLocaleDateString('pt-BR') + '</p>' : ''}
+
+<h3>Itens</h3>
+<table class="br-table">
+  <thead><tr><th>Tipo</th><th>Qtd</th><th>Valor</th><th>Arte</th></tr></thead>
+  <tbody>
+    ${pedido.itens.map(i => `
+    <tr>
+      <td>${i.tipo}</td><td>${i.quantidade}</td>
+      <td>R$ ${Number(i.valor).toFixed(2)}</td>
+      <td>${i.nome_original
+        ? '<a href="/admin/pedidos/' + pedido.id + '/itens/' + i.id + '/arquivo/' + i.arquivo_id + '">' + i.nome_original + '</a>'
+        : '<span class="br-tag danger">Sem arquivo</span>'}</td>
+    </tr>`).join('')}
+  </tbody>
+</table>
+
+<h3>Histórico</h3>
+<ol class="br-step vertical">
+  ${pedido.historico.map(h => `
+  <li class="step-item">
+    <div class="step-title">${h.status_novo.replace(/_/g,' ')}</div>
+    <div class="step-subtitle">${h.nome_usuario} — ${new Date(h.created_at).toLocaleString('pt-BR')}</div>
+    ${h.comentario ? '<div class="step-content">' + h.comentario + '</div>' : ''}
+  </li>`).join('')}
+</ol>
+
+${acoesPermitidas.length > 0 ? `
+<h3>Ações</h3>
+<form method="POST" action="/admin/pedidos/${pedido.id}/status">
+  <div class="br-select"><label>Novo status</label>
+    <select name="status">
+      ${acoesPermitidas.map(s => '<option value="' + s + '">' + s.replace(/_/g,' ') + '</option>').join('')}
+    </select>
+  </div>
+  <div class="br-input"><label>Prazo de entrega (opcional)</label>
+    <input name="prazo_entrega" type="date">
+  </div>
+  <div class="br-textarea"><label>Comentário (obrigatório para pendência)</label>
+    <textarea name="comentario"></textarea>
+  </div>
+  <button class="br-button primary" type="submit">Confirmar ação</button>
+</form>` : ''}
+` }) %>

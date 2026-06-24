@@ -1,0 +1,26 @@
+<%- include('../layout', { title: 'Painel de Pedidos', body: `
+<h2>Painel de Pedidos</h2>
+
+<div class="br-tab" style="margin-bottom:1rem">
+  ${[['todos','Todos'],['aguardando_analise','Aguardando'],['pendencia','Pendência'],
+     ['em_producao','Em produção'],['pronto','Prontos']].map(([v,l]) =>
+    '<a href="/admin/pedidos' + (v === 'todos' ? '' : '?status=' + v) + '" class="br-item' + (statusFiltro === v ? ' active' : '') + '">' + l + '</a>'
+  ).join('')}
+</div>
+
+${pedidos.length === 0 ? '<p>Nenhum pedido nessa situação.</p>' : `
+<table class="br-table">
+  <thead><tr><th>Número</th><th>Cliente</th><th>Título</th><th>Status</th><th>Data</th><th></th></tr></thead>
+  <tbody>
+    ${pedidos.map(p => `
+    <tr>
+      <td>${p.numero}</td>
+      <td>${p.nome_usuario}</td>
+      <td>${p.titulo}</td>
+      <td><span class="br-tag">${p.status.replace(/_/g,' ')}</span></td>
+      <td>${new Date(p.created_at).toLocaleDateString('pt-BR')}</td>
+      <td><a href="/admin/pedidos/${p.id}" class="br-button secondary small">Ver</a></td>
+    </tr>`).join('')}
+  </tbody>
+</table>`}
+` }) %>

@@ -3,6 +3,14 @@ const { requireSession, requireOperador } = require('../middleware/auth');
 const catalogo = require('../models/catalogo');
 const arquivoModel = require('../models/arquivo');
 const fs = require('fs');
+const pedidoModel = require('../models/pedido');
+
+const TRANSICOES = {
+  aguardando_analise: ['em_producao', 'pendencia', 'cancelado'],
+  pendencia:          ['em_producao', 'cancelado'],
+  em_producao:        ['pronto', 'pendencia'],
+  pronto:             ['retirado'],
+};
 
 router.use(requireSession, requireOperador);
 
@@ -44,6 +52,42 @@ router.post('/catalogo/:id/suspender', async (req, res) => {
 router.post('/catalogo/:id/reativar', async (req, res) => {
   await catalogo.reativar(req.params.id);
   res.redirect('/admin/catalogo');
+});
+
+router.get('/pedidos', async (req, res) => {
+  const { status } = req.query;
+  const pedidos = await pedidoModel.listarTodos(status ? { status } : {});
+  res.render('admin/pedidos', { pedidos, statusFiltro: status || 'todos' });
+});
+
+router.get('/pedidos/:id', async (req, res) => {
+  const pedido = await pedidoModel.findById(req.params.id);
+  if (!pedido) return res.status(404).render('erro', { mensagem: 'Pedido não encontrado.' });
+  const acoesPermitidas = TRANSICOES[pedido.status] || [];
+  res.render('admin/pedido-detalhe', { pedido, acoesPermitidas });
+});
+
+router.post('/pedidos/:id/status', async (req, res) => {
+  const pedido = await pedidoModel.findById(req.params.id);
+  if (!pedido) return res.status(404).render('erro', { mensagem: 'Pedido não encontrado.' });
+
+  const { status, comentario, prazo_entrega } = req.body;
+  const permitidos = TRANSICOES[pedido.status] || [];
+  if (!permitidos.includes(status)) {
+    return res.status(400).render('erro', { mensagem: 'Transição de status inválida.' });
+  }
+  if (status === 'pendencia' && !comentario) {
+    return res.status(400).render('erro', { mensagem: 'Comentário obrigatório em pendências.' });
+  }
+
+  await pedidoModel.atualizarStatus(pedido.id, {
+    status,
+    usuario_id: req.session.usuario.id,
+    comentario: comentario || null,
+    prazo_entrega: prazo_entrega || null,
+  });
+
+  res.redirect(`/admin/pedidos/${pedido.id}`);
 });
 
 router.get('/pedidos/:id/itens/:itemId/arquivo/:arquivoId', async (req, res) => {
