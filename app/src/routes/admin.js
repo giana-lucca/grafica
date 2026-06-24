@@ -12,13 +12,14 @@ async function dispararNotificacoes(pedido, novoStatus, emailCliente) {
   const { rows: operadores } = await pool.query(
     "SELECT email FROM usuarios WHERE perfil IN ('operador','admin')"
   );
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
 
   if (novoStatus === 'aguardando_analise') {
     for (const op of operadores) {
       emailService.enviar({
         para: op.email,
         assunto: `[Gráfica UFSM] Novo pedido aguardando análise — ${pedido.numero}`,
-        texto: `O pedido ${pedido.numero} (${pedido.titulo}) foi enviado pelo cliente e aguarda análise.\n\nAcesse: http://localhost:3000/admin/pedidos/${pedido.id}`,
+        texto: `O pedido ${pedido.numero} (${pedido.titulo}) foi enviado pelo cliente e aguarda análise.\n\nAcesse: ${baseUrl}/admin/pedidos/${pedido.id}`,
       }).catch(e => console.error('Erro ao enviar e-mail:', e));
     }
   }
@@ -39,11 +40,13 @@ async function dispararNotificacoes(pedido, novoStatus, emailCliente) {
       titulo: 'Pendência no pedido',
       mensagem: `Seu pedido ${pedido.numero} tem uma pendência. Acesse o sistema para mais detalhes.`,
     });
-    emailService.enviar({
-      para: emailCliente,
-      assunto: `[Gráfica UFSM] Pendência no pedido ${pedido.numero}`,
-      texto: `Seu pedido ${pedido.numero} (${pedido.titulo}) tem uma pendência.\nAcesse o sistema: http://localhost:3000/pedidos/${pedido.id}`,
-    }).catch(e => console.error('Erro ao enviar e-mail:', e));
+    if (emailCliente) {
+      emailService.enviar({
+        para: emailCliente,
+        assunto: `[Gráfica UFSM] Pendência no pedido ${pedido.numero}`,
+        texto: `Seu pedido ${pedido.numero} (${pedido.titulo}) tem uma pendência.\nAcesse o sistema: ${baseUrl}/pedidos/${pedido.id}`,
+      }).catch(e => console.error('Erro ao enviar e-mail:', e));
+    }
   }
 
   if (novoStatus === 'pronto') {
@@ -53,11 +56,13 @@ async function dispararNotificacoes(pedido, novoStatus, emailCliente) {
       titulo: 'Pedido pronto para retirada',
       mensagem: `Seu pedido ${pedido.numero} está pronto para retirada na Gráfica UFSM.`,
     });
-    emailService.enviar({
-      para: emailCliente,
-      assunto: `[Gráfica UFSM] Pedido ${pedido.numero} pronto`,
-      texto: `Seu pedido ${pedido.numero} (${pedido.titulo}) está pronto para retirada na Gráfica UFSM.`,
-    }).catch(e => console.error('Erro ao enviar e-mail:', e));
+    if (emailCliente) {
+      emailService.enviar({
+        para: emailCliente,
+        assunto: `[Gráfica UFSM] Pedido ${pedido.numero} pronto`,
+        texto: `Seu pedido ${pedido.numero} (${pedido.titulo}) está pronto para retirada na Gráfica UFSM.`,
+      }).catch(e => console.error('Erro ao enviar e-mail:', e));
+    }
   }
 }
 

@@ -8,11 +8,12 @@ async function notificarOperadoresEmail(pedido) {
   const { rows: operadores } = await pool.query(
     "SELECT email FROM usuarios WHERE perfil IN ('operador','admin')"
   );
+  const baseUrl = process.env.BASE_URL || 'http://localhost:3000';
   for (const op of operadores) {
     emailService.enviar({
       para: op.email,
       assunto: `[Gráfica UFSM] Novo pedido aguardando análise — ${pedido.numero}`,
-      texto: `O pedido ${pedido.numero} (${pedido.titulo}) foi enviado pelo cliente e aguarda análise.\n\nAcesse: http://localhost:3000/admin/pedidos/${pedido.id}`,
+      texto: `O pedido ${pedido.numero} (${pedido.titulo}) foi enviado pelo cliente e aguarda análise.\n\nAcesse: ${baseUrl}/admin/pedidos/${pedido.id}`,
     }).catch(e => console.error('Erro ao enviar e-mail:', e));
   }
 }

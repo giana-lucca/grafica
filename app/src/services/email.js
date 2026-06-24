@@ -1,16 +1,20 @@
 const nodemailer = require('nodemailer');
 
-function criarTransport() {
-  return nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || '587'),
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
-  });
+let _transport = null;
+
+function getTransport() {
+  if (!_transport) {
+    _transport = nodemailer.createTransport({
+      host: process.env.EMAIL_HOST,
+      port: parseInt(process.env.EMAIL_PORT || '587'),
+      auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    });
+  }
+  return _transport;
 }
 
 async function enviar({ para, assunto, texto }) {
-  const transport = criarTransport();
-  await transport.sendMail({
+  await getTransport().sendMail({
     from: process.env.EMAIL_FROM || 'grafica@ufsm.br',
     to: para,
     subject: assunto,
