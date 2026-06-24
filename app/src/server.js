@@ -16,7 +16,7 @@ app.use(express.json());
 app.use('/govbr-ds', express.static(path.join(__dirname, '..', 'public', 'govbr-ds')));
 
 app.use(session({
-  store: new PgStore({ pool, tableName: 'session' }),
+  store: new PgStore({ pool, tableName: 'session', createTableIfMissing: true }),
   secret: process.env.SESSION_SECRET || (() => { if (process.env.NODE_ENV === 'production') throw new Error('SESSION_SECRET é obrigatório em produção'); return 'dev-secret-local'; })(),
   resave: false,
   saveUninitialized: false,

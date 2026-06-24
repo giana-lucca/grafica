@@ -63,17 +63,11 @@ ${erro ? '<div class="br-message danger"><div class="content">' + erro + '</div>
     <div class="wizard-panel-content">
       <div class="br-input"><label>Título do pedido</label><input id="inp-titulo" required></div>
       <div class="br-textarea"><label>Observações (opcional)</label><textarea id="inp-obs"></textarea></div>
-      <div class="br-input">
-        <label>Número da transferência bancária</label>
-        <input id="inp-transf" required>
-        <span class="br-message feedback">Obrigatório para confirmar o pedido.</span>
-      </div>
-      <p>Você pode salvar como rascunho e confirmar depois.</p>
+      <p>Após salvar, você poderá fazer upload das artes e confirmar o pedido na página de detalhes.</p>
     </div>
     <div class="wizard-panel-btn">
       <button class="br-button secondary" type="button" onclick="irEtapa(2)">Anterior</button>
-      <button class="br-button secondary" type="button" onclick="salvar('rascunho')">Salvar rascunho</button>
-      <button class="br-button primary" type="button" onclick="confirmar()">Confirmar pedido</button>
+      <button class="br-button primary" type="button" onclick="salvar()">Salvar rascunho</button>
     </div>
   </div>
 </div>
@@ -83,7 +77,6 @@ ${erro ? '<div class="br-message danger"><div class="content">' + erro + '</div>
   <input type="hidden" name="observacao_cliente" id="hid-obs">
   <input type="hidden" name="itens" id="hid-itens">
   <input type="hidden" name="acabamento" id="hid-acabamento">
-  <input type="hidden" name="numero_transferencia" id="hid-transf">
 </form>
 `, scripts: `
 <script>
@@ -152,11 +145,10 @@ function irEtapa(n) {
   });
 }
 
-function submeterForm(transferencia) {
+function submeterForm() {
   document.getElementById('hid-titulo').value = document.getElementById('inp-titulo').value;
   document.getElementById('hid-obs').value = document.getElementById('inp-obs').value;
   document.getElementById('hid-itens').value = JSON.stringify(itensPedido);
-  document.getElementById('hid-transf').value = transferencia || '';
   const acab = {
     plastificacao: document.getElementById('sel-plast').value || null,
     grampo: document.getElementById('cb-grampo').checked,
@@ -168,16 +160,6 @@ function submeterForm(transferencia) {
   document.getElementById('form-pedido').submit();
 }
 
-function salvar(modo) { submeterForm(''); }
-
-function confirmar() {
-  if (itensPedido.length === 0) {
-    alert('Adicione pelo menos um item ao pedido.');
-    return;
-  }
-  const transf = document.getElementById('inp-transf').value;
-  if (!transf) { alert('Informe o número da transferência.'); return; }
-  submeterForm(transf);
-}
+function salvar() { submeterForm(); }
 </script>
 ` }) %>

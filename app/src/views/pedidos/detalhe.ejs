@@ -20,10 +20,29 @@ ${pedido.prazo_entrega ? ' · Prazo: ' + new Date(pedido.prazo_entrega).toLocale
     <tr>
       <td>${i.tipo}</td><td>${i.quantidade}</td>
       <td>R$ ${Number(i.valor).toFixed(2)}</td>
-      <td>${i.nome_original || '<span class="br-tag danger">Sem arquivo</span>'}</td>
+      <td>
+        ${i.nome_original
+          ? i.nome_original
+          : (pedido.status === 'rascunho' ? `
+        <form id="form-upload-${i.id}" enctype="multipart/form-data">
+          <input type="file" id="file-${i.id}" accept=".pdf,.png,.jpg,.jpeg,.ai,.cdr">
+          <button type="button" onclick="uploadArte('${pedido.id}', '${i.id}')">Enviar arte</button>
+        </form>
+        <span id="status-${i.id}"></span>` : '<span class="br-tag danger">Sem arquivo</span>')}
+      </td>
     </tr>`).join('')}
   </tbody>
 </table>
+
+${pedido.status === 'rascunho' ? `
+<h3>Confirmar pedido</h3>
+<p>Após enviar as artes de todos os itens, preencha o número da transferência e confirme o pedido.</p>
+<form method="POST" action="/pedidos/${pedido.id}/confirmar">
+  <div class="br-input"><label>Número da transferência bancária</label>
+    <input name="numero_transferencia" required>
+  </div>
+  <button class="br-button primary" type="submit">Confirmar pedido</button>
+</form>` : ''}
 
 <h3>Histórico</h3>
 <ol class="br-step vertical">
@@ -41,4 +60,24 @@ ${pedido.status === 'pendencia' ? `
   <div class="br-textarea"><label>Sua resposta</label><textarea name="comentario" required></textarea></div>
   <button class="br-button primary" type="submit">Enviar resposta</button>
 </form>` : ''}
+`, scripts: `
+<script>
+async function uploadArte(pedidoId, itemId) {
+  const fileInput = document.getElementById('file-' + itemId);
+  if (!fileInput.files[0]) { alert('Selecione um arquivo.'); return; }
+  const form = new FormData();
+  form.append('arquivo', fileInput.files[0]);
+  try {
+    const resp = await fetch('/pedidos/' + pedidoId + '/itens/' + itemId + '/arquivo', {
+      method: 'POST', body: form
+    });
+    if (!resp.ok) throw new Error('Erro no upload');
+    const data = await resp.json();
+    document.getElementById('status-' + itemId).textContent = '✓ ' + data.nome_original;
+    document.getElementById('form-upload-' + itemId).style.display = 'none';
+  } catch (err) {
+    alert('Erro ao enviar arte: ' + err.message);
+  }
+}
+</script>
 ` }) %>
