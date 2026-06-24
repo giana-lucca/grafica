@@ -3,6 +3,35 @@ const { requireSession } = require('../middleware/auth');
 const pedidoModel = require('../models/pedido');
 const itemModel = require('../models/item');
 const acabamentoModel = require('../models/acabamento');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const { v4: uuidv4 } = require('uuid');
+const arquivoModel = require('../models/arquivo');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const now = new Date();
+    const dir = path.join(process.env.UPLOAD_DIR || '/app/uploads',
+      String(now.getFullYear()), String(now.getMonth() + 1).padStart(2, '0'));
+    fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${uuidv4()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    const extsAceitos = ['.pdf', '.png', '.jpg', '.jpeg', '.ai', '.cdr'];
+    if (extsAceitos.includes(ext)) return cb(null, true);
+    cb(new Error('Formato não permitido. Use PDF, PNG, JPG, AI ou CDR.'));
+  },
+});
 
 router.use(requireSession);
 
@@ -88,6 +117,55 @@ router.post('/:id/responder', async (req, res) => {
     comentario: req.body.comentario,
   });
   res.redirect(`/pedidos/${pedido.id}`);
+});
+
+router.post('/:id/itens/:itemId/arquivo', upload.single('arquivo'), async (req, res) => {
+  try {
+    const pedido = await pedidoModel.findById(req.params.id);
+    if (!pedido || pedido.usuario_id !== req.session.usuario.id) {
+      return res.status(403).json({ erro: 'Acesso negado.' });
+    }
+    const arquivo = await arquivoModel.criar({
+      item_id: req.params.itemId,
+      nome_original: req.file.originalname,
+      nome_arquivo: req.file.filename,
+      caminho: req.file.path,
+      mime_type: req.file.mimetype,
+      tamanho: req.file.size,
+    });
+    res.json({ arquivo_id: arquivo.id, nome_original: arquivo.nome_original, caminho: arquivo.caminho });
+  } catch (err) {
+    res.status(400).json({ erro: err.message });
+  }
+});
+
+router.delete('/:id/itens/:itemId/arquivo/:arquivoId', async (req, res) => {
+  try {
+    const pedido = await pedidoModel.findById(req.params.id);
+    if (!pedido || pedido.usuario_id !== req.session.usuario.id) {
+      return res.status(403).json({ erro: 'Acesso negado.' });
+    }
+    const arquivo = await arquivoModel.findById(req.params.arquivoId);
+    if (arquivo) {
+      fs.rmSync(arquivo.caminho, { force: true });
+      await arquivoModel.deletar(arquivo.id);
+    }
+    res.status(204).send();
+  } catch (err) {
+    res.status(500).json({ erro: err.message });
+  }
+});
+
+router.get('/:id/itens/:itemId/arquivo/:arquivoId', async (req, res) => {
+  try {
+    const pedido = await pedidoModel.findById(req.params.id);
+    if (!pedido || pedido.usuario_id !== req.session.usuario.id) return res.status(403).send();
+    const arquivo = await arquivoModel.findById(req.params.arquivoId);
+    if (!arquivo) return res.status(404).send();
+    res.download(arquivo.caminho, arquivo.nome_original);
+  } catch (err) {
+    res.status(500).send();
+  }
 });
 
 module.exports = router;

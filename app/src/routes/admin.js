@@ -1,6 +1,8 @@
 const router = require('express').Router();
 const { requireSession, requireOperador } = require('../middleware/auth');
 const catalogo = require('../models/catalogo');
+const arquivoModel = require('../models/arquivo');
+const fs = require('fs');
 
 router.use(requireSession, requireOperador);
 
@@ -42,6 +44,16 @@ router.post('/catalogo/:id/suspender', async (req, res) => {
 router.post('/catalogo/:id/reativar', async (req, res) => {
   await catalogo.reativar(req.params.id);
   res.redirect('/admin/catalogo');
+});
+
+router.get('/pedidos/:id/itens/:itemId/arquivo/:arquivoId', async (req, res) => {
+  try {
+    const arquivo = await arquivoModel.findById(req.params.arquivoId);
+    if (!arquivo) return res.status(404).render('erro', { mensagem: 'Arquivo não encontrado.' });
+    res.download(arquivo.caminho, arquivo.nome_original);
+  } catch (err) {
+    res.status(500).render('erro', { mensagem: err.message });
+  }
 });
 
 module.exports = router;
