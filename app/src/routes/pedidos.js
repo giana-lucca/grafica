@@ -18,6 +18,11 @@ router.get('/novo', (req, res) => {
 // Salva rascunho com itens e acabamento recebidos do wizard (JSON no body)
 router.post('/', async (req, res) => {
   const { titulo, observacao_cliente, itens, acabamento } = req.body;
+
+  if (!titulo?.trim()) {
+    return res.render('pedidos/novo', { erro: 'Título do pedido é obrigatório.' });
+  }
+
   try {
     const pedido = await pedidoModel.criar({
       usuario_id: req.session.usuario.id,
@@ -60,6 +65,9 @@ router.post('/:id/confirmar', async (req, res) => {
     return res.render('pedidos/detalhe', { pedido, erro: 'Todos os itens precisam de arquivo de arte.' });
   }
   const { numero_transferencia } = req.body;
+  if (!numero_transferencia?.trim()) {
+    return res.render('pedidos/detalhe', { pedido, erro: 'Número de transferência é obrigatório.' });
+  }
   await pedidoModel.atualizarStatus(pedido.id, {
     status: 'aguardando_analise',
     usuario_id: req.session.usuario.id,

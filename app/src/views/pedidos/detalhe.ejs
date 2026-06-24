@@ -6,6 +6,8 @@
   </ol>
 </nav>
 
+${erro ? '<div class="br-message danger"><div class="content">' + erro + '</div></div>' : ''}
+
 <h2>Pedido ${pedido.numero} — ${pedido.titulo}</h2>
 <p><span class="br-tag">${pedido.status.replace('_',' ')}</span>
 ${pedido.prazo_entrega ? ' · Prazo: ' + new Date(pedido.prazo_entrega).toLocaleDateString('pt-BR') : ''}</p>

@@ -116,19 +116,24 @@ async function adicionarItem() {
     altura: parseFloat(document.getElementById('inp-alt').value),
   } : {};
 
-  const resp = await fetch('/api/calcular-item', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ catalogo_servico_id: id, quantidade: qtd, opcoes }),
-  });
-  const { valor } = await resp.json();
+  try {
+    const resp = await fetch('/api/calcular-item', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ catalogo_servico_id: id, quantidade: qtd, opcoes }),
+    });
+    if (!resp.ok) throw new Error('Erro ao calcular preço');
+    const { valor } = await resp.json();
 
-  itensPedido.push({ catalogo_servico_id: id, tipo, quantidade: qtd, valor, opcoes });
-  total += valor;
-  document.getElementById('total').textContent = total.toFixed(2).replace('.',',');
+    itensPedido.push({ catalogo_servico_id: id, tipo, quantidade: qtd, valor, opcoes });
+    total += valor;
+    document.getElementById('total').textContent = total.toFixed(2).replace('.',',');
 
-  const tr = document.createElement('tr');
-  tr.innerHTML = '<td>' + descricao + '</td><td>' + qtd + '</td><td>R$ ' + valor.toFixed(2) + '</td><td><span class="br-tag warning">Aguardando</span></td><td><button type="button" onclick="removerItem(' + (itensPedido.length-1) + ', this, ' + valor + ')">&#x2715;</button></td>';
-  document.getElementById('tbody-itens').appendChild(tr);
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + descricao + '</td><td>' + qtd + '</td><td>R$ ' + valor.toFixed(2) + '</td><td><span class="br-tag warning">Aguardando</span></td><td><button type="button" onclick="removerItem(' + (itensPedido.length-1) + ', this, ' + valor + ')">&#x2715;</button></td>';
+    document.getElementById('tbody-itens').appendChild(tr);
+  } catch (err) {
+    alert('Erro ao adicionar item: ' + err.message);
+  }
 }
 
 function removerItem(idx, btn, valor) {
@@ -166,6 +171,10 @@ function submeterForm(transferencia) {
 function salvar(modo) { submeterForm(''); }
 
 function confirmar() {
+  if (itensPedido.length === 0) {
+    alert('Adicione pelo menos um item ao pedido.');
+    return;
+  }
   const transf = document.getElementById('inp-transf').value;
   if (!transf) { alert('Informe o número da transferência.'); return; }
   submeterForm(transf);
