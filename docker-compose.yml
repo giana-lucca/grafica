@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: banco_grafica
+      POSTGRES_USER: grafica
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-grafica_dev}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grafica -d banco_grafica"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: ./app
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://grafica:${DB_PASSWORD:-grafica_dev}@db:5432/banco_grafica
+      PORTAL_URL: ${PORTAL_URL:-http://portal-legado:8080}
+      SESSION_SECRET: ${SESSION_SECRET:-dev_secret_change_in_prod}
+      EMAIL_HOST: ${EMAIL_HOST:-smtp.ufsm.br}
+      EMAIL_PORT: ${EMAIL_PORT:-587}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      EMAIL_FROM: ${EMAIL_FROM:-grafica@ufsm.br}
+      NODE_ENV: ${NODE_ENV:-development}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+      - ./app/src:/app/src
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pg_data:
+  uploads:
