@@ -1,5 +1,5 @@
 // grafica/app/src/server.js
-try { require('dotenv').config(); } catch (_) {}
+require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
 const PgStore = require('connect-pg-simple')(session);
@@ -17,7 +17,7 @@ app.use('/govbr-ds', express.static(path.join(__dirname, '..', 'public', 'govbr-
 
 app.use(session({
   store: new PgStore({ pool, tableName: 'session' }),
-  secret: process.env.SESSION_SECRET || 'dev-secret',
+  secret: process.env.SESSION_SECRET || (() => { if (process.env.NODE_ENV === 'production') throw new Error('SESSION_SECRET é obrigatório em produção'); return 'dev-secret-local'; })(),
   resave: false,
   saveUninitialized: false,
   cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 8 * 60 * 60 * 1000 },
