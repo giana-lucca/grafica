@@ -1,0 +1,25 @@
+<!-- grafica/app/src/views/login.ejs -->
+<%- include('layout', { title: 'Login', body: `
+<div class="row justify-content-center">
+  <div class="col-sm-8 col-md-6 col-lg-4">
+    <div class="br-signin">
+      <div class="signin-header">
+        <div class="signin-title">Gráfica UFSM</div>
+        <div class="signin-subtitle">Entre com sua matrícula e senha UFSM</div>
+      </div>
+      ${erro ? '<div class="br-message danger"><div class="content">' + erro + '</div></div>' : ''}
+      <form method="POST" action="/login">
+        <div class="br-input">
+          <label for="matricula">Matrícula</label>
+          <input id="matricula" name="matricula" type="text" placeholder="Ex: 201812345" required>
+        </div>
+        <div class="br-input">
+          <label for="senha">Senha</label>
+          <input id="senha" name="senha" type="password" required>
+        </div>
+        <button class="br-button primary block" type="submit">Entrar</button>
+      </form>
+    </div>
+  </div>
+</div>
+` }) %>

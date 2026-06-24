@@ -1,0 +1,39 @@
+<!-- grafica/app/src/views/layout.ejs -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= typeof title !== 'undefined' ? title + ' — ' : '' %>Gráfica UFSM</title>
+  <link rel="stylesheet" href="/govbr-ds/dist/core.min.css">
+</head>
+<body>
+  <header class="br-header" id="header">
+    <div class="container-lg">
+      <div class="header-top">
+        <div class="header-logo">
+          <span class="br-divider vertical"></span>
+          <div class="header-sign">Gráfica UFSM</div>
+        </div>
+        <% if (usuario) { %>
+        <div class="header-actions">
+          <div class="header-links">
+            <nav class="br-list horizontal">
+              <a class="br-item" href="/notificacoes">Notificações</a>
+              <a class="br-item" href="/logout">Sair (<%= usuario.nome.split(' ')[0] %>)</a>
+            </nav>
+          </div>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </header>
+
+  <main class="container-lg" style="padding: 2rem 1rem;">
+    <%- body %>
+  </main>
+
+  <script src="/govbr-ds/dist/core.min.js"></script>
+  <%- typeof scripts !== 'undefined' ? scripts : '' %>
+</body>
+</html>
