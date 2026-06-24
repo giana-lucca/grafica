@@ -1,6 +1,21 @@
 const router = require('express').Router();
 const { requireSession } = require('../middleware/auth');
 const pedidoModel = require('../models/pedido');
+const emailService = require('../services/email');
+const pool = require('../config/db');
+
+async function notificarOperadoresEmail(pedido) {
+  const { rows: operadores } = await pool.query(
+    "SELECT email FROM usuarios WHERE perfil IN ('operador','admin')"
+  );
+  for (const op of operadores) {
+    emailService.enviar({
+      para: op.email,
+      assunto: `[Gráfica UFSM] Novo pedido aguardando análise — ${pedido.numero}`,
+      texto: `O pedido ${pedido.numero} (${pedido.titulo}) foi enviado pelo cliente e aguarda análise.\n\nAcesse: http://localhost:3000/admin/pedidos/${pedido.id}`,
+    }).catch(e => console.error('Erro ao enviar e-mail:', e));
+  }
+}
 const itemModel = require('../models/item');
 const acabamentoModel = require('../models/acabamento');
 const multer = require('multer');
@@ -97,12 +112,13 @@ router.post('/:id/confirmar', async (req, res) => {
   if (!numero_transferencia?.trim()) {
     return res.render('pedidos/detalhe', { pedido, erro: 'Número de transferência é obrigatório.' });
   }
-  await pedidoModel.atualizarStatus(pedido.id, {
+  const pedidoAtualizado = await pedidoModel.atualizarStatus(pedido.id, {
     status: 'aguardando_analise',
     usuario_id: req.session.usuario.id,
     numero_transferencia,
     valor_total: pedido.itens.reduce((acc, i) => acc + Number(i.valor), 0),
   });
+  await notificarOperadoresEmail(pedidoAtualizado);
   res.redirect(`/pedidos/${pedido.id}`);
 });
 
@@ -111,11 +127,12 @@ router.post('/:id/responder', async (req, res) => {
   if (!pedido || pedido.usuario_id !== req.session.usuario.id) {
     return res.status(404).render('erro', { mensagem: 'Pedido não encontrado.' });
   }
-  await pedidoModel.atualizarStatus(pedido.id, {
+  const pedidoRespondido = await pedidoModel.atualizarStatus(pedido.id, {
     status: 'aguardando_analise',
     usuario_id: req.session.usuario.id,
     comentario: req.body.comentario,
   });
+  await notificarOperadoresEmail(pedidoRespondido);
   res.redirect(`/pedidos/${pedido.id}`);
 });
 

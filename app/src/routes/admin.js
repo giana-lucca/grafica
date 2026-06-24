@@ -4,6 +4,62 @@ const catalogo = require('../models/catalogo');
 const arquivoModel = require('../models/arquivo');
 const fs = require('fs');
 const pedidoModel = require('../models/pedido');
+const notificacaoModel = require('../models/notificacao');
+const emailService = require('../services/email');
+const pool = require('../config/db');
+
+async function dispararNotificacoes(pedido, novoStatus, emailCliente) {
+  const { rows: operadores } = await pool.query(
+    "SELECT email FROM usuarios WHERE perfil IN ('operador','admin')"
+  );
+
+  if (novoStatus === 'aguardando_analise') {
+    for (const op of operadores) {
+      emailService.enviar({
+        para: op.email,
+        assunto: `[Gráfica UFSM] Novo pedido aguardando análise — ${pedido.numero}`,
+        texto: `O pedido ${pedido.numero} (${pedido.titulo}) foi enviado pelo cliente e aguarda análise.\n\nAcesse: http://localhost:3000/admin/pedidos/${pedido.id}`,
+      }).catch(e => console.error('Erro ao enviar e-mail:', e));
+    }
+  }
+
+  if (novoStatus === 'em_producao') {
+    await notificacaoModel.criar({
+      usuario_id: pedido.usuario_id,
+      pedido_id: pedido.id,
+      titulo: 'Pedido em produção',
+      mensagem: `Seu pedido ${pedido.numero} entrou em produção.`,
+    });
+  }
+
+  if (novoStatus === 'pendencia') {
+    await notificacaoModel.criar({
+      usuario_id: pedido.usuario_id,
+      pedido_id: pedido.id,
+      titulo: 'Pendência no pedido',
+      mensagem: `Seu pedido ${pedido.numero} tem uma pendência. Acesse o sistema para mais detalhes.`,
+    });
+    emailService.enviar({
+      para: emailCliente,
+      assunto: `[Gráfica UFSM] Pendência no pedido ${pedido.numero}`,
+      texto: `Seu pedido ${pedido.numero} (${pedido.titulo}) tem uma pendência.\nAcesse o sistema: http://localhost:3000/pedidos/${pedido.id}`,
+    }).catch(e => console.error('Erro ao enviar e-mail:', e));
+  }
+
+  if (novoStatus === 'pronto') {
+    await notificacaoModel.criar({
+      usuario_id: pedido.usuario_id,
+      pedido_id: pedido.id,
+      titulo: 'Pedido pronto para retirada',
+      mensagem: `Seu pedido ${pedido.numero} está pronto para retirada na Gráfica UFSM.`,
+    });
+    emailService.enviar({
+      para: emailCliente,
+      assunto: `[Gráfica UFSM] Pedido ${pedido.numero} pronto`,
+      texto: `Seu pedido ${pedido.numero} (${pedido.titulo}) está pronto para retirada na Gráfica UFSM.`,
+    }).catch(e => console.error('Erro ao enviar e-mail:', e));
+  }
+}
 
 const TRANSICOES = {
   aguardando_analise: ['em_producao', 'pendencia', 'cancelado'],
@@ -80,13 +136,14 @@ router.post('/pedidos/:id/status', async (req, res) => {
     return res.status(400).render('erro', { mensagem: 'Comentário obrigatório em pendências.' });
   }
 
-  await pedidoModel.atualizarStatus(pedido.id, {
+  const pedidoAtualizado = await pedidoModel.atualizarStatus(pedido.id, {
     status,
     usuario_id: req.session.usuario.id,
     comentario: comentario || null,
     prazo_entrega: prazo_entrega || null,
   });
 
+  await dispararNotificacoes(pedidoAtualizado, status, pedido.email_usuario);
   res.redirect(`/admin/pedidos/${pedido.id}`);
 });
 

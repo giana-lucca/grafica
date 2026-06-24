@@ -1,0 +1,13 @@
+<%- include('../layout', { title: 'Notificações', body: `
+<h2>Notificações</h2>
+${notificacoes.length === 0 ? '<p>Nenhuma notificação.</p>' : notificacoes.map(n => `
+<div class="br-message ${n.lida ? '' : 'info'}" style="margin-bottom:1rem">
+  <div class="content">
+    <strong>${n.titulo}</strong><br>
+    ${n.mensagem}<br>
+    <small>${new Date(n.created_at).toLocaleString('pt-BR')}</small>
+    ${!n.lida ? '<form method="POST" action="/notificacoes/' + n.id + '/lida" style="display:inline">'
+      + '<button class="br-button secondary small" style="margin-left:1rem">Marcar como lida</button></form>' : ''}
+  </div>
+</div>`).join('')}
+` }) %>
