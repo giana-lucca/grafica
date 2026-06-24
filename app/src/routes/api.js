@@ -17,7 +17,11 @@ router.get('/catalogo-ativo', async (req, res) => {
 router.post('/calcular-item', async (req, res) => {
   try {
     const { catalogo_servico_id, quantidade, opcoes } = req.body;
-    const valor = await precoService.calcular({ catalogo_servico_id, quantidade: parseInt(quantidade), opcoes: opcoes || {} });
+    const qtdInt = parseInt(quantidade);
+    if (!Number.isInteger(qtdInt) || qtdInt <= 0) {
+      return res.status(400).json({ erro: 'quantidade deve ser um número inteiro positivo' });
+    }
+    const valor = await precoService.calcular({ catalogo_servico_id, quantidade: qtdInt, opcoes: opcoes || {} });
     res.json({ valor });
   } catch (err) {
     res.status(400).json({ erro: err.message });

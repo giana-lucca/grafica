@@ -6,6 +6,8 @@ jest.mock('../../src/models/catalogo', () => ({
 }));
 const catalogoModel = require('../../src/models/catalogo');
 
+beforeEach(() => jest.clearAllMocks());
+
 describe('precoService.calcular', () => {
   it('calcula laser P&B: preco_unitario × quantidade', async () => {
     catalogoModel.findById.mockResolvedValue({ preco_unitario: 0.30, preco_m2: null });
