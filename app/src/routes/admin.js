@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { requireSession, requireOperador } = require('../middleware/auth');
+const { requireSession, requireOperador, requireAdmin } = require('../middleware/auth');
 const catalogo = require('../models/catalogo');
 const usuarioModel = require('../models/usuario');
 const arquivoModel = require('../models/arquivo');
@@ -99,7 +99,9 @@ router.post('/clientes/identificar', async (req, res) => {
   }
 });
 
-// Catálogo
+// Catálogo — só admin gerencia (operador não tem acesso)
+router.use('/catalogo', requireAdmin);
+
 router.get('/catalogo', async (req, res) => {
   const itens = await catalogo.listar();
   res.render('admin/catalogo', { itens });

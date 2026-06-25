@@ -14,4 +14,11 @@ function requireOperador(req, res, next) {
   next();
 }
 
-module.exports = { requireSession, requireOperador };
+function requireAdmin(req, res, next) {
+  if (req.session?.usuario?.perfil !== 'admin') {
+    return res.status(403).render('erro', { mensagem: 'Acesso restrito a administradores.' });
+  }
+  next();
+}
+
+module.exports = { requireSession, requireOperador, requireAdmin };
