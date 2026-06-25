@@ -1,0 +1,31 @@
+<%- include('../layout', { title: item ? 'Editar Serviço' : 'Novo Serviço', body: `
+<h2>${item ? 'Editar Serviço' : 'Novo Serviço'}</h2>
+${erro ? '<div class="br-message danger"><div class="content">' + erro + '</div></div>' : ''}
+<form method="POST" action="${item ? '/admin/catalogo/' + item.id : '/admin/catalogo'}">
+  <div class="br-select">
+    <label>Tipo</label>
+    <select name="tipo" required>
+      ${['laser_pb','laser_color','offset','banner','acabamento'].map(t =>
+        '<option value="' + t + '" ' + (item?.tipo === t ? 'selected' : '') + '>' + t + '</option>'
+      ).join('')}
+    </select>
+  </div>
+  <div class="br-input"><label>Descrição</label>
+    <input name="descricao" required value="${item?.descricao || ''}">
+  </div>
+  <div class="br-input"><label>Papel</label>
+    <input name="papel" value="${item?.papel || ''}">
+  </div>
+  <div class="br-input"><label>Formato</label>
+    <input name="formato" value="${item?.formato || ''}">
+  </div>
+  <div class="br-input"><label>Preço unitário (R$)</label>
+    <input name="preco_unitario" type="number" step="0.01" value="${item?.preco_unitario || ''}">
+  </div>
+  <div class="br-input"><label>Preço por m² (R$) — apenas banner</label>
+    <input name="preco_m2" type="number" step="0.01" value="${item?.preco_m2 || ''}">
+  </div>
+  <button class="br-button primary" type="submit">Salvar</button>
+  <a href="/admin/catalogo" class="br-button secondary">Cancelar</a>
+</form>
+` }) %>

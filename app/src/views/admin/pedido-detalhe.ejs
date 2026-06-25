@@ -1,0 +1,69 @@
+<%- include('../layout', { title: 'Pedido ' + pedido.numero, body: `
+<nav class="br-breadcrumb" aria-label="Breadcrumbs"><ol class="crumb-list">
+  <li class="crumb"><a href="/admin/pedidos">Painel</a></li>
+  <li class="crumb" data-active="active"><span style="margin:0 .5rem;color:#888">›</span><span aria-current="page">${pedido.numero}</span></li>
+</ol></nav>
+
+<h2>Pedido ${pedido.numero} — ${pedido.titulo}</h2>
+<p><strong>Cliente:</strong> ${pedido.nome_usuario} (${pedido.email_usuario})</p>
+<p><strong>Status:</strong> <span class="br-tag">${pedido.status.replace(/_/g,' ')}</span></p>
+${pedido.numero_transferencia ? '<p><strong>Transferência:</strong> ' + pedido.numero_transferencia + '</p>' : ''}
+${pedido.prazo_entrega ? '<p><strong>Prazo:</strong> ' + new Date(pedido.prazo_entrega).toLocaleDateString('pt-BR') + '</p>' : ''}
+
+<h3>Itens</h3>
+<table class="br-table">
+  <thead><tr><th>Tipo</th><th>Qtd</th><th>Valor</th><th>Arte</th></tr></thead>
+  <tbody>
+    ${pedido.itens.map(i => `
+    <tr style="${i.ativo ? '' : 'opacity:0.55'}">
+      <td style="${i.ativo ? '' : 'text-decoration:line-through'}">${i.tipo}${i.ativo ? '' : ' <span class="br-tag danger" style="text-decoration:none">removido</span>'}</td>
+      <td style="${i.ativo ? '' : 'text-decoration:line-through'}">${i.quantidade}</td>
+      <td style="${i.ativo ? '' : 'text-decoration:line-through'}">R$ ${Number(i.valor).toFixed(2)}</td>
+      <td>${i.nome_original
+        ? '<a href="/admin/pedidos/' + pedido.id + '/itens/' + i.id + '/arquivo/' + i.arquivo_id + '">' + i.nome_original + '</a>'
+        : '<span class="br-tag danger">Sem arquivo</span>'}</td>
+    </tr>`).join('')}
+  </tbody>
+  <tfoot>
+    <tr>
+      <td colspan="2" style="text-align:right"><strong>Total do pedido</strong></td>
+      <td colspan="2"><strong>R$ ${pedido.itens.filter(i => i.ativo).reduce((acc, i) => acc + Number(i.valor), 0).toFixed(2)}</strong></td>
+    </tr>
+  </tfoot>
+</table>
+
+<h3>Histórico</h3>
+<ul style="list-style:none;padding:0;margin:0 0 0 6px;border-left:2px solid #c5d4eb">
+  ${pedido.historico.map(h => `
+  <li style="position:relative;padding:0 0 1.5rem 1.5rem">
+    <span style="position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:#1351b4"></span>
+    <div style="font-weight:600">${h.status_novo.replace(/_/g,' ')}</div>
+    <div style="font-size:0.85rem;color:#666">${h.nome_usuario} — ${new Date(h.created_at).toLocaleString('pt-BR')}</div>
+    ${h.comentario ? '<div style="margin-top:0.25rem">' + h.comentario + '</div>' : ''}
+  </li>`).join('')}
+</ul>
+
+${acoesPermitidas.length > 0 ? `
+<h3>Ações</h3>
+<form method="POST" action="/admin/pedidos/${pedido.id}/status">
+  <div class="br-select"><label>Novo status</label>
+    <select name="status">
+      ${acoesPermitidas.map(s => '<option value="' + s + '">' + s.replace(/_/g,' ') + '</option>').join('')}
+    </select>
+  </div>
+  <div class="br-input"><label>Prazo de entrega (opcional)</label>
+    <input name="prazo_entrega" type="date">
+  </div>
+  <div class="br-textarea"><label>Comentário (obrigatório para pendência)</label>
+    <textarea name="comentario"></textarea>
+  </div>
+  <button class="br-button primary" type="submit">Confirmar ação</button>
+</form>` : ''}
+`, scripts: `
+<script>
+// Acabou de criar pedido no balcão: limpa o rascunho guardado no navegador
+if (new URLSearchParams(location.search).get('criado') === '1') {
+  localStorage.removeItem('rascunho-pedido:${usuario.id}');
+}
+</script>
+` }) %>

@@ -1,0 +1,63 @@
+<%- include('../layout', { title: 'Catálogo de Serviços', body: `
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Catálogo de Serviços</h2>
+  <a href="/admin/catalogo/novo" class="br-button primary">Novo serviço</a>
+</div>
+
+<table class="br-table">
+  <thead>
+    <tr>
+      <th>Tipo</th><th>Descrição</th><th>Papel</th><th>Formato</th>
+      <th>Preço unit.</th><th>Preço m²</th><th>Status</th><th>Ações</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${itens.map(i => `
+    <tr>
+      <td>${i.tipo}</td>
+      <td>${i.descricao}</td>
+      <td>${i.papel || '—'}</td>
+      <td>${i.formato || '—'}</td>
+      <td>${i.preco_unitario ? 'R$ ' + Number(i.preco_unitario).toFixed(2) : '—'}</td>
+      <td>${i.preco_m2 ? 'R$ ' + Number(i.preco_m2).toFixed(2) : '—'}</td>
+      <td>
+        ${i.ativo
+          ? '<span class="br-tag success">Ativo</span>'
+          : '<span class="br-tag danger">Inativo</span>'}
+      </td>
+      <td>
+        <a href="/admin/catalogo/${i.id}/editar" class="br-button secondary small">Editar</a>
+        ${i.ativo
+          ? '<button onclick="suspender(\'' + i.id + '\')" class="br-button danger small">Suspender</button>'
+          : '<form method="POST" action="/admin/catalogo/' + i.id + '/reativar" style="display:inline"><button class="br-button primary small">Reativar</button></form>'
+        }
+      </td>
+    </tr>`).join('')}
+  </tbody>
+</table>
+
+<!-- Modal suspender -->
+<div class="br-modal" id="modal-suspender" style="display:none">
+  <form id="form-suspender" method="POST">
+    <div class="br-modal-header"><span class="br-modal-title">Suspender serviço</span></div>
+    <div class="br-modal-body">
+      <div class="br-input"><label>Motivo</label><input name="motivo" required></div>
+      <div class="br-input"><label>Inativo até (opcional)</label><input name="inativo_ate" type="date"></div>
+    </div>
+    <div class="br-modal-footer">
+      <button type="submit" class="br-button danger">Suspender</button>
+      <button type="button" onclick="fecharModal()" class="br-button secondary">Cancelar</button>
+    </div>
+  </form>
+</div>
+`, scripts: `
+<script>
+function suspender(id) {
+  document.getElementById('form-suspender').action = '/admin/catalogo/' + id + '/suspender';
+  document.getElementById('modal-suspender').style.display = 'block';
+}
+function fecharModal() {
+  document.getElementById('modal-suspender').style.display = 'none';
+}
+</script>
+` }) %>

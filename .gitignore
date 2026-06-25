@@ -1,0 +1,6 @@
+node_modules/
+package-lock.json
+app/public/govbr-ds/
+*.log
+.env
+uploads/

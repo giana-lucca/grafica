@@ -1,0 +1,36 @@
+<!-- grafica/app/src/views/login.ejs -->
+<%- include('layout', { title: 'Login', body: `
+<div class="row justify-content-center">
+  <div class="col-sm-8 col-md-6 col-lg-4">
+    <div class="br-signin">
+      <div class="signin-header">
+        <div class="signin-title">Gráfica UFSM</div>
+        <div class="signin-subtitle">Entre com seu CPF ou SIAPE/Matrícula</div>
+      </div>
+      ${erro ? '<div class="br-message danger"><div class="content">' + erro + '</div></div>' : ''}
+      <form method="POST" action="/login">
+        <div class="br-input">
+          <label for="identificador">CPF ou SIAPE/Matrícula</label>
+          <input id="identificador" name="identificador" type="text" placeholder="CPF ou SIAPE" required>
+        </div>
+        <button class="br-button primary block" type="submit">Entrar</button>
+      </form>
+      <div style="margin-top: 1rem; border-top: 1px solid #ccc; padding-top: 1rem;">
+        <form method="POST" action="/login-teste" style="margin-bottom: 0.5rem;">
+          <button class="br-button secondary block" type="submit" style="background-color: #f0ad4e; border-color: #f0ad4e; color: #fff;">
+            Entrar como Usuário de Teste (Cliente)
+          </button>
+        </form>
+        <form method="POST" action="/login-teste-admin">
+          <button class="br-button secondary block" type="submit" style="background-color: #d9534f; border-color: #d9534f; color: #fff;">
+            Entrar como Admin de Teste
+          </button>
+        </form>
+        <p style="font-size: 0.75rem; color: #888; margin-top: 0.5rem; text-align: center;">
+          Apenas para testes — web service não disponível
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+` }) %>
