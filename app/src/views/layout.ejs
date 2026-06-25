@@ -22,7 +22,9 @@
               <% if (usuario.perfil === 'admin' || usuario.perfil === 'operador') { %>
               <a class="br-item" href="/pedidos/novo">Novo Pedido</a>
               <a class="br-item" href="/admin/pedidos">Pedidos (Admin)</a>
+              <% if (usuario.perfil === 'admin') { %>
               <a class="br-item" href="/admin/catalogo">Catálogo</a>
+              <% } %>
               <% } else { %>
               <a class="br-item" href="/pedidos">Meus Pedidos</a>
               <% } %>

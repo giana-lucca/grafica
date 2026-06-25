@@ -45,6 +45,22 @@ router.post('/login-teste-admin', async (req, res) => {
   }
 });
 
+router.post('/login-teste-operador', async (req, res) => {
+  const usuarioTeste = {
+    matricula: '000000002',
+    nome: 'Operador de Teste',
+    email: 'operador-teste@ufsm.br',
+    perfil: 'operador',
+  };
+  try {
+    const usuario = await usuarioModel.upsert(usuarioTeste);
+    req.session.usuario = { id: usuario.id, matricula: usuario.matricula, nome: usuario.nome, email: usuario.email, perfil: usuario.perfil };
+    res.redirect(destinoPorPerfil(usuario.perfil));
+  } catch (err) {
+    res.render('login', { erro: 'Erro ao entrar como operador de teste.' });
+  }
+});
+
 router.post('/login-teste', async (req, res) => {
   const usuarioTeste = {
     matricula: '000000000',
