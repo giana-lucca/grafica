@@ -23,9 +23,18 @@ app.use(session({
   cookie: { secure: process.env.NODE_ENV === 'production', maxAge: 8 * 60 * 60 * 1000 },
 }));
 
-// Disponibiliza usuario logado em todas as views
-app.use((req, res, next) => {
+// Disponibiliza usuario logado e contagem de notificações não-lidas em todas as views
+const notificacaoModel = require('./models/notificacao');
+app.use(async (req, res, next) => {
   res.locals.usuario = req.session?.usuario || null;
+  res.locals.naoLidas = 0;
+  if (req.session?.usuario) {
+    try {
+      res.locals.naoLidas = await notificacaoModel.contarNaoLidas(req.session.usuario.id);
+    } catch (err) {
+      console.error('Erro ao contar notificações:', err);
+    }
+  }
   next();
 });
 

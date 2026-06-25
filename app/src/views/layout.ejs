@@ -19,7 +19,16 @@
         <div class="header-actions">
           <div class="header-links">
             <nav class="br-list horizontal">
-              <a class="br-item" href="/notificacoes">Notificações</a>
+              <% if (usuario.perfil === 'admin' || usuario.perfil === 'operador') { %>
+              <a class="br-item" href="/pedidos/novo">Novo Pedido</a>
+              <a class="br-item" href="/admin/pedidos">Pedidos (Admin)</a>
+              <a class="br-item" href="/admin/catalogo">Catálogo</a>
+              <% } else { %>
+              <a class="br-item" href="/pedidos">Meus Pedidos</a>
+              <% } %>
+              <a class="br-item" href="/notificacoes">
+                Notificações<% if (naoLidas > 0) { %> <span class="br-tag danger" style="border-radius:50%;padding:0 0.5rem;"><%= naoLidas %></span><% } %>
+              </a>
               <a class="br-item" href="/logout">Sair (<%= usuario.nome.split(' ')[0] %>)</a>
             </nav>
           </div>

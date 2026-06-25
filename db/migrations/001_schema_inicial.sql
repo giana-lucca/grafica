@@ -2,13 +2,15 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE usuarios (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  matricula  VARCHAR UNIQUE NOT NULL,
+  matricula  VARCHAR UNIQUE,
+  cpf        VARCHAR,
   nome       VARCHAR NOT NULL,
   email      VARCHAR NOT NULL,
   perfil     VARCHAR NOT NULL CHECK (perfil IN ('cliente','operador','admin')),
   created_at TIMESTAMP DEFAULT NOW(),
   updated_at TIMESTAMP DEFAULT NOW()
 );
+CREATE UNIQUE INDEX usuarios_cpf_uniq ON usuarios (cpf) WHERE cpf IS NOT NULL;
 
 CREATE TABLE catalogo_servicos (
   id             UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -52,7 +54,8 @@ CREATE TABLE itens_pedido (
   formato             VARCHAR,
   quantidade          INTEGER NOT NULL,
   valor               DECIMAL(10,2) NOT NULL,
-  opcoes              JSONB
+  opcoes              JSONB,
+  ativo               BOOLEAN DEFAULT true
 );
 
 CREATE TABLE acabamento (

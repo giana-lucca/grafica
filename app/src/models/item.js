@@ -25,8 +25,12 @@ async function findById(id) {
   return rows[0] || null;
 }
 
+async function inativar(id) {
+  await pool.query('UPDATE itens_pedido SET ativo = false WHERE id = $1', [id]);
+}
+
 async function deletar(id) {
   await pool.query('DELETE FROM itens_pedido WHERE id = $1', [id]);
 }
 
-module.exports = { criar, listarPorPedido, findById, deletar };
+module.exports = { criar, listarPorPedido, findById, inativar, deletar };

@@ -1,13 +1,24 @@
 <%- include('../layout', { title: 'Notificações', body: `
-<h2>Notificações</h2>
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Notificações</h2>
+  ${notificacoes.some(n => !n.lida)
+    ? '<form method="POST" action="/notificacoes/marcar-todas-lidas"><button class="br-button secondary small" type="submit">Marcar todas como lidas</button></form>'
+    : ''}
+</div>
+
 ${notificacoes.length === 0 ? '<p>Nenhuma notificação.</p>' : notificacoes.map(n => `
-<div class="br-message ${n.lida ? '' : 'info'}" style="margin-bottom:1rem">
-  <div class="content">
-    <strong>${n.titulo}</strong><br>
-    ${n.mensagem}<br>
-    <small>${new Date(n.created_at).toLocaleString('pt-BR')}</small>
-    ${!n.lida ? '<form method="POST" action="/notificacoes/' + n.id + '/lida" style="display:inline">'
-      + '<button class="br-button secondary small" style="margin-left:1rem">Marcar como lida</button></form>' : ''}
+<div style="margin-bottom:1rem;padding:1rem;border-radius:8px;border-left:4px solid ${n.lida ? '#ccc' : '#1351b4'};background:${n.lida ? '#f8f8f8' : '#e8f0fa'}">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:1rem">
+    <div>
+      <strong>${n.pedido_id ? '<a href="/notificacoes/' + n.id + '/abrir">' + n.titulo + '</a>' : n.titulo}</strong>
+      ${n.lida ? '<span style="color:#888;font-size:0.8rem;margin-left:0.5rem">✓ lida</span>' : '<span class="br-tag danger" style="margin-left:0.5rem;font-size:0.7rem">Nova</span>'}
+      <br>
+      ${n.mensagem}<br>
+      <small style="color:#666">${new Date(n.created_at).toLocaleString('pt-BR')}</small>
+      ${n.pedido_id ? '<br><a href="/notificacoes/' + n.id + '/abrir" style="font-weight:600">Ver pedido →</a>' : ''}
+    </div>
+    ${!n.lida ? '<form method="POST" action="/notificacoes/' + n.id + '/lida">'
+      + '<button class="br-button secondary small" type="submit">Marcar como lida</button></form>' : ''}
   </div>
 </div>`).join('')}
 ` }) %>

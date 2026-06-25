@@ -19,6 +19,8 @@ async function notificarOperadoresEmail(pedido) {
 }
 const itemModel = require('../models/item');
 const acabamentoModel = require('../models/acabamento');
+const catalogoModel = require('../models/catalogo');
+const precoService = require('../services/preco');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -52,8 +54,9 @@ const upload = multer({
 router.use(requireSession);
 
 router.get('/', async (req, res) => {
-  const pedidos = await pedidoModel.listarPorUsuario(req.session.usuario.id);
-  res.render('pedidos/lista', { pedidos });
+  const { status } = req.query;
+  const pedidos = await pedidoModel.listarPorUsuario(req.session.usuario.id, status ? { status } : {});
+  res.render('pedidos/lista', { pedidos, statusFiltro: status || 'todos' });
 });
 
 router.get('/novo', (req, res) => {
@@ -62,15 +65,22 @@ router.get('/novo', (req, res) => {
 
 // Salva rascunho com itens e acabamento recebidos do wizard (JSON no body)
 router.post('/', async (req, res) => {
-  const { titulo, observacao_cliente, itens, acabamento } = req.body;
+  const { titulo, observacao_cliente, itens, acabamento, cliente_id } = req.body;
 
   if (!titulo?.trim()) {
     return res.render('pedidos/novo', { erro: 'Título do pedido é obrigatório.' });
   }
 
+  // Admin/operador cria o pedido em nome do cliente identificado; cliente cria para si.
+  const ehOperador = req.session.usuario.perfil === 'admin' || req.session.usuario.perfil === 'operador';
+  if (ehOperador && !cliente_id) {
+    return res.render('pedidos/novo', { erro: 'Identifique o cliente (CPF ou SIAPE) antes de salvar.' });
+  }
+  const usuario_id = ehOperador ? cliente_id : req.session.usuario.id;
+
   try {
     const pedido = await pedidoModel.criar({
-      usuario_id: req.session.usuario.id,
+      usuario_id,
       titulo,
       observacao_cliente,
     });
@@ -86,7 +96,8 @@ router.post('/', async (req, res) => {
       await acabamentoModel.salvar({ pedido_id: pedido.id, ...acab });
     }
 
-    res.redirect(`/pedidos/${pedido.id}`);
+    const destino = ehOperador ? `/admin/pedidos/${pedido.id}?criado=1` : `/pedidos/${pedido.id}?criado=1`;
+    res.redirect(destino);
   } catch (err) {
     res.render('pedidos/novo', { erro: err.message });
   }
@@ -97,7 +108,50 @@ router.get('/:id', async (req, res) => {
   if (!pedido || pedido.usuario_id !== req.session.usuario.id) {
     return res.status(404).render('erro', { mensagem: 'Pedido não encontrado.' });
   }
-  res.render('pedidos/detalhe', { pedido });
+  const catalogo = await catalogoModel.listarAtivos();
+  res.render('pedidos/detalhe', { pedido, erro: null, catalogo });
+});
+
+// Adiciona um item a um pedido existente (rascunho ou em pendência)
+router.post('/:id/itens', async (req, res) => {
+  const pedido = await pedidoModel.findById(req.params.id);
+  if (!pedido || pedido.usuario_id !== req.session.usuario.id) {
+    return res.status(404).render('erro', { mensagem: 'Pedido não encontrado.' });
+  }
+  if (!['rascunho', 'pendencia'].includes(pedido.status)) {
+    return res.status(400).render('erro', { mensagem: 'Este pedido não pode ser editado.' });
+  }
+  try {
+    const { catalogo_servico_id, quantidade, largura, altura } = req.body;
+    const qtd = parseInt(quantidade);
+    if (!Number.isInteger(qtd) || qtd <= 0) throw new Error('Quantidade inválida.');
+    const servico = await catalogoModel.findById(catalogo_servico_id);
+    if (!servico) throw new Error('Serviço não encontrado.');
+    const opcoes = servico.tipo === 'banner'
+      ? { largura: parseFloat(largura), altura: parseFloat(altura) } : {};
+    const valor = await precoService.calcular({ catalogo_servico_id, quantidade: qtd, opcoes });
+    await itemModel.criar({
+      pedido_id: pedido.id, catalogo_servico_id, tipo: servico.tipo,
+      papel: servico.papel, formato: servico.formato, quantidade: qtd, valor, opcoes,
+    });
+    res.redirect(`/pedidos/${pedido.id}`);
+  } catch (err) {
+    const catalogo = await catalogoModel.listarAtivos();
+    res.render('pedidos/detalhe', { pedido, erro: err.message, catalogo });
+  }
+});
+
+// Inativa um item (mantém no histórico)
+router.post('/:id/itens/:itemId/inativar', async (req, res) => {
+  const pedido = await pedidoModel.findById(req.params.id);
+  if (!pedido || pedido.usuario_id !== req.session.usuario.id) {
+    return res.status(404).render('erro', { mensagem: 'Pedido não encontrado.' });
+  }
+  if (!['rascunho', 'pendencia'].includes(pedido.status)) {
+    return res.status(400).render('erro', { mensagem: 'Este pedido não pode ser editado.' });
+  }
+  await itemModel.inativar(req.params.itemId);
+  res.redirect(`/pedidos/${pedido.id}`);
 });
 
 router.post('/:id/confirmar', async (req, res) => {
@@ -105,19 +159,23 @@ router.post('/:id/confirmar', async (req, res) => {
   if (!pedido || pedido.usuario_id !== req.session.usuario.id) {
     return res.status(404).render('erro', { mensagem: 'Pedido não encontrado.' });
   }
-  const todosComArquivo = pedido.itens.every(i => i.arquivo_id);
+  const ativos = pedido.itens.filter(i => i.ativo);
+  if (ativos.length === 0) {
+    return res.render('pedidos/detalhe', { pedido, erro: 'Adicione ao menos um item ao pedido.', catalogo: await catalogoModel.listarAtivos() });
+  }
+  const todosComArquivo = ativos.every(i => i.arquivo_id);
   if (!todosComArquivo) {
-    return res.render('pedidos/detalhe', { pedido, erro: 'Todos os itens precisam de arquivo de arte.' });
+    return res.render('pedidos/detalhe', { pedido, erro: 'Todos os itens precisam de arquivo de arte.', catalogo: await catalogoModel.listarAtivos() });
   }
   const { numero_transferencia } = req.body;
   if (!numero_transferencia?.trim()) {
-    return res.render('pedidos/detalhe', { pedido, erro: 'Número de transferência é obrigatório.' });
+    return res.render('pedidos/detalhe', { pedido, erro: 'Número de transferência é obrigatório.', catalogo: await catalogoModel.listarAtivos() });
   }
   const pedidoAtualizado = await pedidoModel.atualizarStatus(pedido.id, {
     status: 'aguardando_analise',
     usuario_id: req.session.usuario.id,
     numero_transferencia,
-    valor_total: pedido.itens.reduce((acc, i) => acc + Number(i.valor), 0),
+    valor_total: ativos.reduce((acc, i) => acc + Number(i.valor), 0),
   });
   await notificarOperadoresEmail(pedidoAtualizado);
   res.redirect(`/pedidos/${pedido.id}`);
@@ -180,7 +238,9 @@ router.get('/:id/itens/:itemId/arquivo/:arquivoId', async (req, res) => {
     if (!pedido || pedido.usuario_id !== req.session.usuario.id) return res.status(403).send();
     const arquivo = await arquivoModel.findById(req.params.arquivoId);
     if (!arquivo) return res.status(404).send();
-    res.download(arquivo.caminho, arquivo.nome_original);
+    res.setHeader('Content-Type', arquivo.mime_type);
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(arquivo.nome_original)}"`);
+    res.sendFile(path.resolve(arquivo.caminho));
   } catch (err) {
     res.status(500).send();
   }

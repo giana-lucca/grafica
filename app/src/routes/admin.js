@@ -1,8 +1,10 @@
 const router = require('express').Router();
 const { requireSession, requireOperador } = require('../middleware/auth');
 const catalogo = require('../models/catalogo');
+const usuarioModel = require('../models/usuario');
 const arquivoModel = require('../models/arquivo');
 const fs = require('fs');
+const path = require('path');
 const pedidoModel = require('../models/pedido');
 const notificacaoModel = require('../models/notificacao');
 const emailService = require('../services/email');
@@ -74,6 +76,28 @@ const TRANSICOES = {
 };
 
 router.use(requireSession, requireOperador);
+
+// Identifica o cliente por CPF ou SIAPE (atendimento de balcão).
+// Se não existir, cria localmente. No futuro, quando não encontrado,
+// chamar aqui o web service do portal para carregar os dados.
+router.post('/clientes/identificar', async (req, res) => {
+  try {
+    const { tipo, valor, nome, email } = req.body;
+    if (!valor?.trim()) return res.status(400).json({ erro: 'Informe o CPF ou SIAPE.' });
+
+    const ident = tipo === 'cpf' ? { cpf: valor.trim() } : { matricula: valor.trim() };
+    let cliente = await usuarioModel.buscarPorIdentificador(ident);
+    if (cliente) return res.json({ existe: true, cliente });
+
+    // TODO: integrar com o web service do portal para carregar nome/email/etc.
+    if (!nome?.trim() || !email?.trim()) return res.json({ existe: false });
+
+    cliente = await usuarioModel.criarCliente({ ...ident, nome: nome.trim(), email: email.trim() });
+    return res.json({ existe: true, criado: true, cliente });
+  } catch (err) {
+    res.status(400).json({ erro: err.message });
+  }
+});
 
 // Catálogo
 router.get('/catalogo', async (req, res) => {
@@ -156,7 +180,9 @@ router.get('/pedidos/:id/itens/:itemId/arquivo/:arquivoId', async (req, res) => 
   try {
     const arquivo = await arquivoModel.findById(req.params.arquivoId);
     if (!arquivo) return res.status(404).render('erro', { mensagem: 'Arquivo não encontrado.' });
-    res.download(arquivo.caminho, arquivo.nome_original);
+    res.setHeader('Content-Type', arquivo.mime_type);
+    res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(arquivo.nome_original)}"`);
+    res.sendFile(path.resolve(arquivo.caminho));
   } catch (err) {
     res.status(500).render('erro', { mensagem: err.message });
   }

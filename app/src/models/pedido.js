@@ -11,10 +11,13 @@ async function criar({ usuario_id, titulo, observacao_cliente }) {
   return rows[0];
 }
 
-async function listarPorUsuario(usuario_id) {
+async function listarPorUsuario(usuario_id, { status } = {}) {
+  const params = [usuario_id];
+  let where = 'WHERE usuario_id = $1';
+  if (status) { params.push(status); where += ' AND status = $2'; }
   const { rows } = await pool.query(
-    'SELECT * FROM pedidos WHERE usuario_id = $1 ORDER BY created_at DESC',
-    [usuario_id]
+    `SELECT * FROM pedidos ${where} ORDER BY created_at DESC`,
+    params
   );
   return rows;
 }
