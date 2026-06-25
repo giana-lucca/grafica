@@ -73,10 +73,24 @@ npm test
 ## Fluxo de status dos pedidos
 
 ```
-rascunho → aguardando_analise → em_producao → pronto → retirado
-                              ↘ pendencia ↗
-                              ↘ cancelado
+rascunho ──► aguardando_analise ──► em_producao ──► pronto ──► retirado
+                   ▲   │                 │
+                   │   ▼                 ▼
+                   └ pendencia ◄─────────┘
+                        │
+                        ▼
+                    cancelado
 ```
+
+Transições da gráfica (operador/admin), definidas em `TRANSICOES` (`app/src/routes/admin.js`):
+
+- `aguardando_analise` → `em_producao` · `pendencia` · `cancelado`
+- `pendencia` → `em_producao` · `cancelado`
+- `em_producao` → `pronto` · `pendencia`
+- `pronto` → `retirado`
+
+Além dessas, o **cliente** move `pendencia` → `aguardando_analise` ao responder a
+pendência (`app/src/routes/pedidos.js`).
 
 ## Perfis de usuário
 
