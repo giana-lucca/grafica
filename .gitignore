@@ -4,3 +4,5 @@ app/public/govbr-ds/
 *.log
 .env
 uploads/
+.playwright-mcp/
+docs/manual-usuario.html
