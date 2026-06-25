@@ -4,3 +4,4 @@ app/public/govbr-ds/
 *.log
 .env
 uploads/
+.playwright-mcp/

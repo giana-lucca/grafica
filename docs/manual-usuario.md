@@ -32,9 +32,16 @@ O acesso é feito pelo seu **CPF** ou pela sua **matrícula SIAPE**:
 1. Digite seu CPF ou SIAPE no campo indicado.
 2. Clique em **Entrar**.
 
+![Tela de login: campo para CPF ou SIAPE e botão Entrar](img/01-login.png)
+
 Se o número não for encontrado, aparece a mensagem *"CPF ou SIAPE não
 encontrado."* — confira se digitou corretamente ou procure a gráfica para
 verificar seu cadastro.
+
+> Os botões **"Entrar como Usuário de Teste"** e **"Entrar como Admin de Teste"**
+> que aparecem na tela são apenas para o ambiente de demonstração, enquanto a
+> integração com o portal da UFSM não está ativa. Em produção, o acesso é pelo
+> seu CPF/SIAPE.
 
 > O sistema decide sozinho para onde te levar: clientes vão para a lista de
 > pedidos; operadores e administradores vão para o painel da gráfica.
@@ -62,38 +69,50 @@ Clique em **Novo pedido**. O pedido é montado em um assistente de **3 etapas**:
 
 ### Etapa 1 — Itens
 
-1. Dê um **título** ao pedido (ex.: "Cartazes do evento de extensão"). É
-   obrigatório.
-2. Se quiser, escreva uma **observação** para a gráfica.
-3. Adicione um ou mais **itens**. Para cada item:
-   - Escolha o **serviço** no catálogo (ex.: folder, cartaz, banner).
+1. Adicione um ou mais **itens**. Para cada item:
+   - Escolha o **serviço** no catálogo (ex.: impressão laser, banner, crachá).
    - Informe a **quantidade**.
    - Se o serviço for cobrado por metro quadrado (como **banner**), informe a
      **largura** e a **altura** em metros.
-4. O **preço de cada item é calculado na hora**, conforme a regra do serviço:
+   - Clique em **Adicionar item**: ele entra na tabela com o valor calculado.
+2. O **preço de cada item é calculado na hora**, conforme a regra do serviço:
    - Serviços comuns: `preço unitário × quantidade`.
    - Banner e similares: `largura × altura × preço por m² × quantidade`.
 
-> Você pode adicionar quantos itens quiser ao mesmo pedido.
+> Você pode adicionar quantos itens quiser ao mesmo pedido. O **total** aparece
+> abaixo da tabela.
 
-Clique em **Avançar** para ir ao acabamento.
+![Etapa Itens do wizard: serviço, quantidade, item adicionado e total](img/03-wizard-itens.png)
+
+Clique em **Próximo** para ir ao acabamento.
+
+> O **título** e as **observações** do pedido são preenchidos na última etapa
+> (Confirmar).
 
 ### Etapa 2 — Acabamento
 
-Marque os acabamentos desejados para o pedido:
+Escolha os acabamentos desejados para o pedido:
 
-- **Plastificação**
+- **Plastificação** (sem plastificação, brilho ou fosco)
 - **Grampo**
 - **Vinco**
 - **Cola**
 
-Marque o que precisar e clique em **Avançar**.
+![Etapa Acabamento do wizard: plastificação e caixas de seleção](img/04-wizard-acabamento.png)
+
+Marque o que precisar e clique em **Próximo**.
 
 ### Etapa 3 — Confirmar
 
-Revise o resumo do pedido e clique em **Salvar**. O pedido é gravado como
-**rascunho** — ou seja, ainda **não foi enviado** para a gráfica. Você ainda
-precisa enviar as artes e confirmar (próximos passos).
+1. Dê um **título** ao pedido (ex.: "Apostilas da oficina de robótica"). É
+   obrigatório.
+2. Se quiser, escreva uma **observação** para a gráfica.
+3. Clique em **Salvar rascunho**.
+
+![Etapa Confirmar do wizard: título, observações e botão Salvar rascunho](img/05-wizard-confirmar.png)
+
+O pedido é gravado como **rascunho** — ou seja, ainda **não foi enviado** para a
+gráfica. Você ainda precisa enviar as artes e confirmar (próximos passos).
 
 ## 3. Enviar a arte de cada item
 
@@ -108,6 +127,8 @@ Formatos e limite aceitos:
 | Formatos aceitos            | Tamanho máximo por arquivo |
 | --------------------------- | -------------------------- |
 | PDF, PNG, JPG, AI, CDR      | 50 MB                      |
+
+![Detalhe do pedido em rascunho: tabela de itens com botão Enviar arte](img/06-cliente-detalhe-rascunho.png)
 
 Se enviar um formato diferente, o sistema avisa: *"Formato não permitido. Use
 PDF, PNG, JPG, AI ou CDR."*
@@ -141,10 +162,14 @@ ser que a gráfica o devolva como pendência.
 Na **lista de pedidos** você vê todos os seus pedidos e pode **filtrar por
 status**. Para ver os detalhes, abra o pedido.
 
+![Lista de pedidos do cliente com filtro por status](img/02-cliente-lista.png)
+
 Você é avisado de duas formas conforme o pedido anda:
 
-- **Notificações dentro do sistema** (o sininho/lista de notificações).
+- **Notificações dentro do sistema** (contador no menu, no link **Notificações**).
 - **E-mails**, em alguns eventos (pendência e pedido pronto).
+
+![Lista de notificações do cliente](img/09-notificacoes.png)
 
 Veja o que cada status significa na
 [tabela de status](#tabela-de-status-visão-do-cliente).
@@ -154,6 +179,8 @@ Veja o que cada status significa na
 Se a gráfica encontrar algum problema (arte fora do padrão, dado faltando etc.),
 ela devolve o pedido como **pendência**, sempre com um **comentário** explicando o
 que precisa ser ajustado. Você recebe **notificação no sistema e e-mail**.
+
+![Pedido em pendência: comentário da gráfica no histórico e campo de resposta](img/07-cliente-detalhe-pendencia.png)
 
 Para resolver:
 
@@ -170,6 +197,8 @@ O pedido volta para **"aguardando análise"** e a gráfica é avisada novamente.
 Quando o status muda para **"pronto"**, você recebe aviso de que o material está
 **pronto para retirada na Gráfica UFSM**. É só ir até a gráfica retirar. Depois da
 retirada, a equipe marca o pedido como **"retirado"** e ele se encerra.
+
+![Pedido pronto para retirada](img/08-cliente-detalhe-pronto.png)
 
 ## Perguntas frequentes — Cliente
 
@@ -209,6 +238,8 @@ Logo após entrar, você vê **todos os pedidos** dos clientes. É possível **f
 por status** (por exemplo, ver só os que estão "aguardando análise"). Clique em um
 pedido para abrir os detalhes.
 
+![Painel de pedidos do admin com filtro por status](img/10-admin-painel.png)
+
 ## 2. Analisar um pedido
 
 Ao abrir um pedido você vê os **itens**, as **quantidades**, o **acabamento**, o
@@ -227,6 +258,8 @@ Cada pedido segue uma **sequência de etapas**. O sistema só mostra as transiç
 | Pendência            | Em produção · Cancelado                   |
 | Em produção          | Pronto · Pendência                        |
 | Pronto               | Retirado                                  |
+
+![Detalhe do pedido no admin: itens, histórico e ações de mudança de status](img/11-admin-detalhe.png)
 
 Regras importantes ao mudar o status:
 
@@ -250,6 +283,8 @@ Quando o cliente vem pessoalmente, você pode montar o pedido por ele:
 4. Crie o pedido normalmente (mesmo wizard de itens/acabamento) — ele ficará
    registrado **no nome do cliente**, não no seu.
 
+![Novo pedido no balcão: seção Cliente para identificar por CPF ou SIAPE](img/12-admin-balcao.png)
+
 > Observação técnica: a integração automática com o portal da UFSM para puxar os
 > dados do cliente ainda está prevista para o futuro. Por enquanto, o cadastro de
 > um cliente novo é feito informando nome e e-mail no balcão.
@@ -258,6 +293,8 @@ Quando o cliente vem pessoalmente, você pode montar o pedido por ele:
 
 O **catálogo** lista todos os serviços que o cliente pode escolher ao montar um
 pedido. No menu de catálogo você pode:
+
+![Catálogo de serviços: lista com ações de editar e suspender](img/13-admin-catalogo.png)
 
 ### Criar ou editar um serviço
 
@@ -275,6 +312,8 @@ Informe:
 
 > Defina **um** dos dois preços conforme o tipo de serviço. Serviços por m² pedem
 > que o cliente informe largura e altura ao adicionar o item.
+
+![Formulário de cadastro/edição de serviço do catálogo](img/14-admin-catalogo-form.png)
 
 ### Suspender um serviço temporariamente
 
@@ -352,7 +391,21 @@ A gestão do catálogo é exclusiva do perfil **admin**.
 ## Fluxo do pedido (resumo)
 
 ```
-rascunho → aguardando análise → em produção → pronto → retirado
-                            ↘ pendência ↗
-                            ↘ cancelado
+rascunho ──► aguardando análise ──► em produção ──► pronto ──► retirado
+                  ▲   │                  │
+                  │   ▼                  ▼
+                  └ pendência ◄──────────┘
+                       │
+                       ▼
+                   cancelado
 ```
+
+Como ler o diagrama:
+
+- **Aguardando análise** pode ir para **em produção**, **pendência** ou **cancelado**.
+- **Em produção** pode ir para **pronto** ou voltar para **pendência**.
+- **Pendência**:
+  - quando o **cliente responde**, o pedido volta para **aguardando análise**
+    (caminho normal);
+  - a **gráfica** também pode levá-lo direto para **em produção** ou **cancelado**.
+- **Pronto** só vai para **retirado**.
